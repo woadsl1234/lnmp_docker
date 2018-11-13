@@ -1,0 +1,45 @@
+version: '3'
+services:
+  php-fpm:
+    build: ./php/
+    container_name: php-fpm
+    ports:
+      - "9000"
+    volumes:
+      - ../../shenji/XiaoCms:/data/www:rw
+      - ./php/php.ini:/usr/local/etc/php/php.ini:ro # 当前php配置文件；可以拷贝修改php.ini为想要的配置
+      - ./php/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+      - ../logs/php:/var/log/php-fpm:rw
+    restart: always
+    hostname: "php-fpm"
+    working_dir: /app/php
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    depends_on:
+      - php-fpm
+    links:
+      - php-fpm
+      - db
+    volumes:
+      - ../../shenji/XiaoCms:/data/www:rw
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../logs/nginx:/var/log/nginx:rw
+
+    ports:
+      - "8080:8080"
+      - "443"
+    restart: always
+    command: nginx -g 'daemon off;'
+  db:
+    image: daocloud.io/library/mysql:5.7.4
+    restart: always
+
+    expose:
+    - "3306"
+
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+   
